@@ -1,0 +1,32 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Shelfwise Library{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'library/style.css' %}">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="{% url 'home' %}"><span>SW</span> Shelfwise</a>
+    <nav class="main-nav">
+      <a class="nav-link" href="{% url 'doctor_list' %}">Doctors</a>
+      <a class="nav-link" href="{% url 'schedule_appointment' %}">Appointments</a>
+      <a class="button button-small" href="{% url 'add_book' %}">+ Add book</a>
+    </nav>
+  </header>
+  <main>
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer>Built from your Python library logic · Django + SQLite</footer>
+</body>
+</html>

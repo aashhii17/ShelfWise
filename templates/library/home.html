@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">YOUR DIGITAL CATALOGUE</p>
+    <h1>A calmer way to<br>manage your <em>library.</em></h1>
+    <p class="hero-copy">Find books, track seven-day loans, and keep your collection organised from one simple dashboard.</p>
+  </div>
+  <div class="stats">
+    <div><strong>{{ book_count }}</strong><span>Total books</span></div>
+    <div><strong>{{ available_count }}</strong><span>Available now</span></div>
+    <div><strong>{{ active_loans|length }}</strong><span>On loan</span></div>
+  </div>
+</section>
+
+<section class="catalogue">
+  <div class="section-heading">
+    <div><p class="eyebrow">COLLECTION</p><h2>Browse the shelves</h2></div>
+    <form class="search" method="get">
+      <input type="search" name="q" value="{{ query }}" placeholder="Search books, doctors, specialties, borrowers or IDs…" aria-label="Search books and doctors">
+      <button type="submit">Search</button>
+    </form>
+  </div>
+  {% if query %}<p class="results">Results for “{{ query }}” · <a href="{% url 'home' %}">clear search</a></p>{% endif %}
+  <div class="analytics">
+    <div><strong>{{ overdue_count }}</strong><span>Overdue loans</span></div>
+    <div><strong>{{ active_loans|length }}</strong><span>Active loans</span></div>
+    <div><strong>{{ book_count }}</strong><span>Total books</span></div>
+  </div>
+  {% if doctors %}
+  <section class="doctor-preview">
+    <div class="section-heading"><div><p class="eyebrow">HEALTH PARTNERS</p><h2>Available verified doctors</h2></div><a class="button button-small" href="{% url 'doctor_list' %}">View all</a></div>
+    <div class="doctor-grid">
+      {% for doctor in doctors|slice:":3" %}
+      <article class="doctor-card">
+        <h3>{{ doctor.full_name }}</h3>
+        <p>{{ doctor.speciality }}</p>
+        <p>{{ doctor.contact_email|default:"Email not shared" }}</p>
+        <p>{{ doctor.contact_phone|default:"Phone not shared" }}</p>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+  {% if popular_books %}
+  <section class="popular-books">
+    <div class="section-heading"><div><p class="eyebrow">TRENDING</p><h2>Most borrowed</h2></div></div>
+    <div class="popular-grid">
+      {% for book in popular_books %}
+      <article class="popular-card">
+        <h3><a href="{% url 'book_detail' book.pk %}">{{ book.title }}</a></h3>
+        <p>{{ book.author }}</p>
+        <div><span>{{ book.total_loan_count }} loans</span><a href="{% url 'book_detail' book.pk %}">View</a></div>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+  <div class="book-grid">
+    {% for book in books %}
+      <article class="book-card">
+        <div class="book-spine"><span>{{ book.title|slice:":1" }}</span></div>
+        <div class="book-info">
+          {% if book.id in unavailable_ids %}<span class="status unavailable">On loan</span>{% else %}<span class="status">Available</span>{% endif %}
+          <h3><a href="{% url 'book_detail' book.pk %}">{{ book.title }}</a></h3>
+          <p>{{ book.author }}</p>
+          <div class="book-bottom"><span>{{ book.year|default:"Year unknown" }}</span>
+            {% if book.total_loan_count %}<span class="loan-count">{{ book.total_loan_count }} loans</span>{% endif %}
+            <a href="{% url 'book_detail' book.pk %}">View details →</a>
+          </div>
+        </div>
+      </article>
+    {% empty %}
+      <div class="empty"><h3>No books found</h3><p>Try another title or author.</p></div>
+    {% endfor %}
+  </div>
+</section>
+
+{% if active_loans %}
+<section class="loans">
+  <div class="section-heading"><div><p class="eyebrow">LOAN DESK</p><h2>Currently issued</h2></div></div>
+  <div class="loan-list">
+    {% for loan in active_loans %}
+      <div class="loan-row">
+        <div><strong>{{ loan.book.title }}</strong><span>{{ loan.borrower_name }} · ID {{ loan.borrower_id }}</span></div>
+        <div class="due {% if loan.is_overdue %}overdue{% endif %}"><small>{% if loan.is_overdue %}OVERDUE{% else %}DUE{% endif %}</small>{{ loan.due_date|date:"d M Y" }}</div>
+        <form method="post" action="{% url 'return_book' loan.pk %}">{% csrf_token %}<button class="button secondary" type="submit">Mark returned</button></form>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

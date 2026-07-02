@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ book.title }} · Shelfwise{% endblock %}
+{% block content %}
+<section class="book-detail">
+  <div class="section-heading">
+    <div><p class="eyebrow">BOOK PROFILE</p><h2>{{ book.title }}</h2></div>
+    {% if book.current_loan %}
+      <span class="status unavailable">On loan</span>
+    {% else %}
+      <a class="button button-small" href="{% url 'issue_book' book.pk %}">Issue book</a>
+    {% endif %}
+  </div>
+
+  <div class="book-meta">
+    <div>
+      <p><strong>Author</strong></p>
+      <p>{{ book.author }}</p>
+    </div>
+    <div>
+      <p><strong>Year</strong></p>
+      <p>{{ book.year|default:"Unknown" }}</p>
+    </div>
+    <div>
+      <p><strong>Status</strong></p>
+      <p>{% if book.current_loan %}On loan{% else %}Available{% endif %}</p>
+    </div>
+    <div>
+      <p><strong>Last borrowed</strong></p>
+      <p>{{ book.last_borrower|default:"Never" }}</p>
+    </div>
+    <div>
+      <p><strong>Total loans</strong></p>
+      <p>{{ book.loans.count }}</p>
+    </div>
+  </div>
+
+  {% if book.current_loan %}
+  <section class="current-loan">
+    <div class="section-heading"><div><p class="eyebrow">CURRENT LOAN</p><h2>Borrower details</h2></div></div>
+    <div class="loan-card">
+      <p><strong>Name</strong> {{ book.current_loan.borrower_name }}</p>
+      <p><strong>ID</strong> {{ book.current_loan.borrower_id }}</p>
+      <p><strong>Issued</strong> {{ book.current_loan.issued_at|date:"d M Y" }}</p>
+      <p><strong>Due</strong> <span class="{% if book.current_loan.is_overdue %}overdue{% endif %}">{{ book.current_loan.due_date|date:"d M Y" }}</span></p>
+      <div class="loan-actions">
+        <form method="post" action="{% url 'return_book' book.current_loan.pk %}">{% csrf_token %}<button class="button secondary" type="submit">Return</button></form>
+        {% if not book.current_loan.is_overdue %}
+        <form method="post" action="{% url 'extend_loan' book.current_loan.pk %}">{% csrf_token %}<button class="button secondary" type="submit">Extend 7 days</button></form>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="history">
+    <div class="section-heading"><div><p class="eyebrow">LOAN HISTORY</p><h2>Recent activity</h2></div></div>
+    <div class="history-list">
+      {% for loan in history %}
+      <div class="history-row">
+        <div>
+          <strong>{{ loan.borrower_name }}</strong>
+          <span>ID {{ loan.borrower_id }}</span>
+        </div>
+        <div>
+          <span>{{ loan.issued_at|date:"d M Y" }} → {{ loan.returned_at|date:"d M Y"|default:"Still out" }}</span>
+        </div>
+        <div class="status-pill {{ loan.status|lower }}">{{ loan.status }}</div>
+      </div>
+      {% empty %}
+      <div class="empty"><h3>No loan history</h3><p>This book has not been borrowed yet.</p></div>
+      {% endfor %}
+    </div>
+  </section>
+</section>
+{% endblock %}

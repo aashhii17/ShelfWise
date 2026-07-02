@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Doctors · Shelfwise{% endblock %}
+{% block content %}
+<section class="doctor-list">
+  <div class="section-heading"><div><p class="eyebrow">DOCTORS</p><h2>Verified medical professionals</h2></div></div>
+  <div class="doctor-grid">
+    {% for doctor in doctors %}
+      <article class="doctor-card">
+        <h3>{{ doctor.full_name }}</h3>
+        <p>{{ doctor.speciality }}</p>
+        <p>{{ doctor.contact_email|default:"No email provided" }}</p>
+        <p>{{ doctor.contact_phone|default:"No phone provided" }}</p>
+        <p class="status {{ doctor.verified|yesno:"verified,unverified" }}">{{ doctor.verified|yesno:"Verified,Pending verification" }}</p>
+      </article>
+    {% empty %}
+      <div class="empty"><h3>No doctors available</h3><p>Try registering a doctor first.</p></div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
