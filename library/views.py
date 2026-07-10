@@ -7,8 +7,8 @@ from django.http import HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .forms import AppointmentForm, BookForm, DoctorForm, IssueForm
-from .models import Appointment, Book, Doctor, Loan
+from .forms import BookForm, IssueForm
+from .models import Book, Loan
 
 
 def home(request):
@@ -19,7 +19,6 @@ def home(request):
         active_loan_count=Count("loans", filter=Q(loans__returned_at__isnull=True)),
         total_loan_count=Count("loans"),
     )
-    doctors = Doctor.objects.filter(verified=True).order_by("speciality", "last_name")
     
     if query:
         books = books.filter(
@@ -45,16 +44,8 @@ def home(request):
         .order_by("-total_loan_count", "title")[:4]
     )
     
-    if query:
-        doctors = doctors.filter(
-            Q(first_name__icontains=query)
-            | Q(last_name__icontains=query)
-            | Q(speciality__icontains=query)
-        ).distinct()
-        
     return render(request, "library/home.html", {
         "books": books,
-        "doctors": doctors,
         "query": query,
         "status_filter": status_filter,
         "unavailable_ids": unavailable_ids,
@@ -152,27 +143,4 @@ def return_book(request, pk):
     return redirect("home")
 
 
-def register_doctor(request):
-    form = DoctorForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        doctor = form.save()
-        if doctor.verified:
-            messages.success(request, f'Dr. {doctor.full_name()} has been registered and verified.')
-        else:
-            messages.warning(request, f'Dr. {doctor.full_name()} has been registered and will be reviewed for verification.')
-        return redirect("home")
-    return render(request, "library/form.html", {"form": form, "title": "Register as a doctor", "button": "Register doctor"})
 
-
-def doctor_list(request):
-    doctors = Doctor.objects.order_by("verified", "speciality", "last_name")
-    return render(request, "library/doctor_list.html", {"doctors": doctors})
-
-
-def schedule_appointment(request):
-    form = AppointmentForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        appointment = form.save()
-        messages.success(request, f'Appointment requested for {appointment.patient_name} with Dr. {appointment.doctor.full_name()} on {appointment.appointment_datetime:%d %b %Y %H:%M}.')
-        return redirect("home")
-    return render(request, "library/form.html", {"form": form, "title": "Schedule an appointment", "button": "Request appointment"})

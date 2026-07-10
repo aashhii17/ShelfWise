@@ -36,21 +36,7 @@
     <a href="?status=loaned" class="analytic-card"><strong>{{ active_loans|length }}</strong><span>Active loans</span></a>
     <a href="?status=all" class="analytic-card"><strong>{{ book_count }}</strong><span>Total books</span></a>
   </div>
-  {% if doctors %}
-  <section class="doctor-preview">
-    <div class="section-heading"><div><p class="eyebrow">HEALTH PARTNERS</p><h2>Available verified doctors</h2></div><a class="button button-small" href="{% url 'doctor_list' %}">View all</a></div>
-    <div class="doctor-grid">
-      {% for doctor in doctors|slice:":3" %}
-      <article class="doctor-card">
-        <h3>{{ doctor.full_name }}</h3>
-        <p>{{ doctor.speciality }}</p>
-        <p>{{ doctor.contact_email|default:"Email not shared" }}</p>
-        <p>{{ doctor.contact_phone|default:"Phone not shared" }}</p>
-      </article>
-      {% endfor %}
-    </div>
-  </section>
-  {% endif %}
+
   {% if popular_books %}
   <section class="popular-books">
     <div class="section-heading"><div><p class="eyebrow">TRENDING</p><h2>Most borrowed</h2></div></div>

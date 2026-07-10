@@ -10,7 +10,4 @@ urlpatterns = [
     path("loans/<int:pk>/extend/", views.extend_loan, name="extend_loan"),
     path("loans/<int:pk>/return/", views.return_book, name="return_book"),
     path("loans/", views.loan_history, name="loan_history"),
-    path("doctors/register/", views.register_doctor, name="register_doctor"),
-    path("doctors/", views.doctor_list, name="doctor_list"),
-    path("appointments/schedule/", views.schedule_appointment, name="schedule_appointment"),
 ]

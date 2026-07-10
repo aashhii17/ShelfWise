@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Appointment, Book, Doctor, Loan
+from .models import Book, Loan
 
 
 class LibraryTests(TestCase):
@@ -46,37 +46,4 @@ class LibraryTests(TestCase):
         self.client.post(reverse("issue_book", args=[self.book.pk]), {"borrower_name": "Two", "borrower_id": "2"})
         self.assertEqual(Loan.objects.filter(book=self.book).count(), 1)
 
-    def test_doctor_registration_and_verification(self):
-        response = self.client.post(reverse("register_doctor"), {
-            "first_name": "Jane",
-            "last_name": "Doe",
-            "speciality": "Cardiology",
-            "ehic_number": "AB1234567890",
-            "identity_proof": "Medical Council registration 12345",
-            "contact_email": "jane.doe@example.com",
-            "contact_phone": "1234567890",
-        })
-        self.assertRedirects(response, reverse("home"))
-        doctor = Doctor.objects.get(first_name="Jane", last_name="Doe")
-        self.assertTrue(doctor.verified)
 
-    def test_schedule_appointment_for_verified_doctor(self):
-        doctor = Doctor.objects.create(
-            first_name="Jane",
-            last_name="Doe",
-            speciality="Cardiology",
-            ehic_number="AB1234567890",
-            identity_proof="Registration 12345",
-        )
-        self.assertTrue(doctor.verified)
-        appointment_time = (timezone.now() + timedelta(days=2)).replace(hour=10, minute=0, second=0, microsecond=0)
-        response = self.client.post(reverse("schedule_appointment"), {
-            "doctor": doctor.pk,
-            "patient_name": "John Smith",
-            "patient_email": "john.smith@example.com",
-            "patient_phone": "5551234567",
-            "appointment_datetime": appointment_time.strftime("%Y-%m-%dT%H:%M"),
-            "reason": "Routine checkup",
-        })
-        self.assertRedirects(response, reverse("home"))
-        self.assertTrue(Appointment.objects.filter(doctor=doctor, patient_name="John Smith").exists())
