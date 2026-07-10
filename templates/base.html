@@ -14,7 +14,11 @@
   <header class="site-header">
     <a class="brand" href="{% url 'home' %}"><span>SW</span> Shelfwise</a>
     <nav class="main-nav">
+      <a class="nav-link" href="{% url 'home' %}">Catalogue</a>
+      <a class="nav-link" href="{% url 'issue_book_global' %}">Issue Book</a>
       <a class="nav-link" href="{% url 'loan_history' %}">Loans</a>
+      <a class="nav-link" href="{% url 'members_list' %}">Members</a>
+      <a class="nav-link" href="{% url 'fines_list' %}">Fines</a>
       <a class="button button-small" href="{% url 'add_book' %}">+ Add book</a>
     </nav>
   </header>

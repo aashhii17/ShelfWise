@@ -18,22 +18,38 @@
     <div><p class="eyebrow">COLLECTION</p><h2>Browse the shelves</h2></div>
     <form class="search" method="get">
       <input type="hidden" name="status" value="{{ status_filter }}">
-      <input type="search" name="q" value="{{ query }}" placeholder="Search books, doctors, specialties, borrowers or IDs…" aria-label="Search books and doctors">
+      <input type="hidden" name="category" value="{{ category_filter }}">
+      <input type="search" name="q" value="{{ query }}" placeholder="Search books by title, author, borrower or member ID…" aria-label="Search books">
       <button type="submit">Search</button>
     </form>
   </div>
   
   <div class="filters">
-    <a href="?status=all{% if query %}&q={{ query }}{% endif %}" class="filter-btn {% if status_filter == 'all' or not status_filter %}active{% endif %}">All Books</a>
-    <a href="?status=available{% if query %}&q={{ query }}{% endif %}" class="filter-btn {% if status_filter == 'available' %}active{% endif %}">Available</a>
-    <a href="?status=loaned{% if query %}&q={{ query }}{% endif %}" class="filter-btn {% if status_filter == 'loaned' %}active{% endif %}">On Loan</a>
-    <a href="?status=overdue{% if query %}&q={{ query }}{% endif %}" class="filter-btn {% if status_filter == 'overdue' %}active{% endif %}">Overdue</a>
+    <a href="?status=all{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" class="filter-btn {% if status_filter == 'all' or not status_filter %}active{% endif %}">All Books</a>
+    <a href="?status=available{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" class="filter-btn {% if status_filter == 'available' %}active{% endif %}">Available</a>
+    <a href="?status=loaned{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" class="filter-btn {% if status_filter == 'loaned' %}active{% endif %}">On Loan</a>
+    <a href="?status=overdue{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" class="filter-btn {% if status_filter == 'overdue' %}active{% endif %}">Overdue</a>
   </div>
 
-  {% if query %}<p class="results">Results for “{{ query }}” · <a href="{% url 'home' %}">clear search</a></p>{% endif %}
+  <div class="filters" style="margin-top: 0.5rem; border-top: 1px solid var(--border); padding-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    <span style="font-size: 0.85rem; color: var(--secondary-text); margin-right: 0.5rem; align-self: center;">Category:</span>
+    <a href="?category=all{% if status_filter %}&status={{ status_filter }}{% endif %}{% if query %}&q={{ query }}{% endif %}" class="filter-btn {% if category_filter == 'all' or not category_filter %}active{% endif %}">All Categories</a>
+    {% for cat in categories %}
+      <a href="?category={{ cat }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if query %}&q={{ query }}{% endif %}" class="filter-btn {% if category_filter == cat %}active{% endif %}">{{ cat }}</a>
+    {% endfor %}
+  </div>
+
+  {% if query or category_filter != 'all' and category_filter %}
+    <p class="results">
+      Results {% if query %}for “{{ query }}”{% endif %} {% if category_filter != 'all' and category_filter %}in Category “{{ category_filter }}”{% endif %} · 
+      <a href="{% url 'home' %}">clear search</a>
+    </p>
+  {% endif %}
+
   <div class="analytics">
     <a href="?status=overdue" class="analytic-card overdue-box"><strong>{{ overdue_count }}</strong><span>Overdue loans</span></a>
     <a href="?status=loaned" class="analytic-card"><strong>{{ active_loans|length }}</strong><span>Active loans</span></a>
+    <a href="{% url 'fines_list' %}" class="analytic-card {% if unpaid_fines > 0 %}overdue-box{% endif %}"><strong>${{ unpaid_fines|floatformat:2 }}</strong><span>Unpaid fines</span></a>
     <a href="?status=all" class="analytic-card"><strong>{{ book_count }}</strong><span>Total books</span></a>
   </div>
 
@@ -51,17 +67,29 @@
     </div>
   </section>
   {% endif %}
+
   <div class="book-grid">
     {% for book in books %}
       <article class="book-card">
         <div class="book-spine"><span>{{ book.title|slice:":1" }}</span></div>
         <div class="book-info">
-          {% if book.id in unavailable_ids %}<span class="status unavailable">On loan</span>{% else %}<span class="status">Available</span>{% endif %}
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            {% if book.id in unavailable_ids %}
+              <span class="status unavailable">On loan</span>
+            {% else %}
+              <span class="status">Available</span>
+            {% endif %}
+            <span class="status-pill returned" style="font-size: 0.75rem; margin: 0; padding: 2px 6px;">{{ book.category }}</span>
+          </div>
           <h3><a href="{% url 'book_detail' book.pk %}">{{ book.title }}</a></h3>
           <p>{{ book.author }}</p>
-          <div class="book-bottom"><span>{{ book.year|default:"Year unknown" }}</span>
-            {% if book.total_loan_count %}<span class="loan-count">{{ book.total_loan_count }} loans</span>{% endif %}
-            <a href="{% url 'book_detail' book.pk %}">View details →</a>
+          <div class="book-bottom">
+            <span>{{ book.year|default:"Year unknown" }}</span>
+            {% if book.id not in unavailable_ids %}
+              <a class="button button-small" href="{% url 'issue_book' book.pk %}" style="padding: 4px 10px; font-size: 0.8rem;">Issue</a>
+            {% else %}
+              <a class="button button-small secondary disabled" style="padding: 4px 10px; font-size: 0.8rem; pointer-events: none; opacity: 0.5;">Issued</a>
+            {% endif %}
           </div>
         </div>
       </article>

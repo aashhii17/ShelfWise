@@ -1026,7 +1026,8 @@ footer {
   letter-spacing: .05em;
 }
 
-.status-pill.due {
+.status-pill.due,
+.status-pill.active {
   background: var(--status-blue-bg);
   color: var(--status-blue-text);
 }

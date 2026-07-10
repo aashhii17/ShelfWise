@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}{{ member.name }} · Shelfwise{% endblock %}
+{% block content %}
+<section class="book-detail">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">MEMBER PROFILE</p>
+      <h2>{{ member.name }}</h2>
+    </div>
+    <span class="status-pill {% if active_loans %}active{% else %}returned{% endif %}">
+      {{ active_loans|length }} Active Loan{{ active_loans|pluralize }}
+    </span>
+  </div>
+
+  <div class="book-meta">
+    <div>
+      <p><strong>Member ID</strong></p>
+      <p>{{ member.member_id }}</p>
+    </div>
+    <div>
+      <p><strong>Email</strong></p>
+      <p>{{ member.email|default:"None provided" }}</p>
+    </div>
+    <div>
+      <p><strong>Registered Since</strong></p>
+      <p>{{ member.joined_at|date:"d M Y" }}</p>
+    </div>
+    <div>
+      <p><strong>Outstanding Fines</strong></p>
+      <p class="{% if total_fines > 0 %}overdue{% endif %}"><strong>${{ total_fines|floatformat:2 }}</strong></p>
+    </div>
+  </div>
+
+  {% if unpaid_loans %}
+  <section class="current-loan" style="margin-top: 2rem;">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow" style="color: var(--error);">PENALTIES</p>
+        <h2>Outstanding Fines</h2>
+      </div>
+    </div>
+    <div class="history-list">
+      {% for loan in unpaid_loans %}
+        <div class="history-row">
+          <div>
+            <strong>{{ loan.book.title }}</strong>
+            <span>Due on {{ loan.due_date|date:"d M Y" }}</span>
+          </div>
+          <div>
+            <span class="overdue" style="font-weight: 600;">${{ loan.fine_amount|floatformat:2 }}</span>
+          </div>
+          <div style="text-align: right;">
+            <form method="post" action="{% url 'pay_fine' loan.pk %}">
+              {% csrf_token %}
+              <button class="button button-small" type="submit">Mark Paid</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="loans" style="margin-top: 2rem;">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">DESK</p>
+        <h2>Active Books Checked Out</h2>
+      </div>
+    </div>
+    <div class="loan-list">
+      {% for loan in active_loans %}
+        <div class="loan-row">
+          <div>
+            <strong><a href="{% url 'book_detail' loan.book.pk %}">{{ loan.book.title }}</a></strong>
+            <span>Issued on {{ loan.issued_at|date:"d M Y" }}</span>
+          </div>
+          <div class="due {% if loan.is_overdue %}overdue{% endif %}">
+            <small>{% if loan.is_overdue %}OVERDUE{% else %}DUE{% endif %}</small>
+            {{ loan.due_date|date:"d M Y" }}
+          </div>
+          <div style="display: flex; gap: 1rem; align-items: center;">
+            <form method="post" action="{% url 'return_book' loan.pk %}">
+              {% csrf_token %}
+              <button class="button secondary" type="submit">Mark Returned</button>
+            </form>
+            {% if not loan.is_overdue %}
+              <form method="post" action="{% url 'extend_loan' loan.pk %}">
+                {% csrf_token %}
+                <button class="button secondary" type="submit">Extend 7 Days</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      {% empty %}
+        <div class="empty">
+          <h3>No active loans</h3>
+          <p>This member doesn't have any books checked out currently.</p>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="history" style="margin-top: 2rem;">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">CHRONOLOGY</p>
+        <h2>Borrowing History</h2>
+      </div>
+    </div>
+    <div class="history-list">
+      {% for loan in loan_history %}
+        <div class="history-row">
+          <div>
+            <strong>{{ loan.book.title }}</strong>
+            <span>Borrowed: {{ loan.issued_at|date:"d M Y" }}</span>
+          </div>
+          <div>
+            <span>Returned: {{ loan.returned_at|date:"d M Y" }}</span>
+          </div>
+          <div>
+            {% if loan.fine_amount > 0 %}
+              <span class="status-pill {% if loan.fine_paid %}returned{% else %}overdue{% endif %}">
+                Fine: ${{ loan.fine_amount|floatformat:2 }} ({% if loan.fine_paid %}Paid{% else %}Unpaid{% endif %})
+              </span>
+            {% else %}
+              <span class="status-pill returned">Returned clean</span>
+            {% endif %}
+          </div>
+        </div>
+      {% empty %}
+        <div class="empty">
+          <h3>No historical records</h3>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+</section>
+{% endblock %}

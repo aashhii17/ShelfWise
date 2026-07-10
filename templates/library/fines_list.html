@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Fines Desk · Shelfwise{% endblock %}
+{% block content %}
+<section class="catalogue">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">ACCOUNTS</p>
+      <h2>Overdue Fines Desk</h2>
+    </div>
+    <div class="analytic-card overdue-box" style="margin: 0;">
+      <strong>${{ total_unpaid|floatformat:2 }}</strong>
+      <span>Total Unpaid Fines</span>
+    </div>
+  </div>
+
+  <div class="history-list" style="margin-top: 2rem;">
+    <div class="history-row" style="font-weight: 600; border-bottom: 2px solid var(--border); padding-bottom: 1rem;">
+      <div>Book Details</div>
+      <div>Member Details</div>
+      <div>Due Date & Status</div>
+      <div>Fine Amount</div>
+      <div style="text-align: right;">Action</div>
+    </div>
+    {% for loan in loans %}
+      <div class="history-row">
+        <div>
+          <strong>{{ loan.book.title }}</strong>
+          <span>By {{ loan.book.author }}</span>
+        </div>
+        <div>
+          {% if loan.member %}
+            <strong><a href="{% url 'member_detail' loan.member.pk %}">{{ loan.member.name }}</a></strong>
+            <span>ID: {{ loan.member.member_id }}</span>
+          {% else %}
+            <strong>{{ loan.borrower_name }}</strong>
+            <span>ID: {{ loan.borrower_id }}</span>
+          {% endif %}
+        </div>
+        <div>
+          <span>Due: {{ loan.due_date|date:"d M Y" }}</span>
+          {% if loan.returned_at %}
+            <span style="color: var(--secondary); font-size: 0.85rem; display: block;">Returned: {{ loan.returned_at|date:"d M Y" }}</span>
+          {% else %}
+            <span class="overdue" style="font-size: 0.85rem; display: block; font-weight: 500;">Still checked out</span>
+          {% endif %}
+        </div>
+        <div>
+          <span style="font-weight: 600; color: {% if loan.fine_paid %}var(--secondary){% else %}var(--error){% endif %};">
+            ${{ loan.fine_amount|floatformat:2 }}
+          </span>
+          <span style="font-size: 0.85rem; display: block; color: var(--secondary_text);">
+            {% if loan.fine_paid %}Paid{% else %}Unpaid{% endif %}
+          </span>
+        </div>
+        <div style="text-align: right;">
+          {% if not loan.fine_paid %}
+            <form method="post" action="{% url 'pay_fine' loan.pk %}">
+              {% csrf_token %}
+              <button class="button button-small" type="submit">Mark Paid</button>
+            </form>
+          {% else %}
+            <span style="color: var(--secondary); font-weight: 600;">✓ Settled</span>
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <div class="empty">
+        <h3>No fines recorded</h3>
+        <p>Excellent! There are no outstanding fines in the system.</p>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

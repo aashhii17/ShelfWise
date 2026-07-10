@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Members · Shelfwise{% endblock %}
+{% block content %}
+<section class="catalogue">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">LIBRARY REGISTRY</p>
+      <h2>Library Members</h2>
+    </div>
+    <form class="search" method="get">
+      <input type="search" name="q" value="{{ query }}" placeholder="Search members by name or ID…" aria-label="Search members">
+      <button type="submit">Search</button>
+    </form>
+  </div>
+
+  <div class="actions-row" style="margin-bottom: 2rem; display: flex; justify-content: flex-end;">
+    <a class="button" href="{% url 'add_member' %}">+ Register New Member</a>
+  </div>
+
+  {% if query %}
+    <p class="results">Results for “{{ query }}” · <a href="{% url 'members_list' %}">clear search</a></p>
+  {% endif %}
+
+  <div class="history-list">
+    <div class="history-row" style="font-weight: 600; border-bottom: 2px solid var(--border); padding-bottom: 1rem;">
+      <div>Member Details</div>
+      <div>Active Loans</div>
+      <div>Registration Date</div>
+      <div style="text-align: right;">Action</div>
+    </div>
+    {% for member in members %}
+      <div class="history-row">
+        <div>
+          <strong>{{ member.name }}</strong>
+          <span>ID: {{ member.member_id }}</span>
+          {% if member.email %}<span>{{ member.email }}</span>{% endif %}
+        </div>
+        <div>
+          <span class="status-pill {% if member.active_loans_count > 0 %}active{% else %}returned{% endif %}">
+            {{ member.active_loans_count }} Active
+          </span>
+        </div>
+        <div>
+          <span>{{ member.joined_at|date:"d M Y" }}</span>
+        </div>
+        <div style="text-align: right;">
+          <a class="button button-small secondary" href="{% url 'member_detail' member.pk %}">Profile</a>
+        </div>
+      </div>
+    {% empty %}
+      <div class="empty">
+        <h3>No members registered</h3>
+        <p>Start by registering your first member to issue books.</p>
+        <a class="button" href="{% url 'add_member' %}">Register Member</a>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
