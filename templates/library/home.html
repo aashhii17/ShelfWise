@@ -7,9 +7,9 @@
     <p class="hero-copy">Find books, track seven-day loans, and keep your collection organised from one simple dashboard.</p>
   </div>
   <div class="stats">
-    <div><strong>{{ book_count }}</strong><span>Total books</span></div>
-    <div><strong>{{ available_count }}</strong><span>Available now</span></div>
-    <div><strong>{{ active_loans|length }}</strong><span>On loan</span></div>
+    <a href="?status=all" class="stat-card"><strong>{{ book_count }}</strong><span>Total books</span></a>
+    <a href="?status=available" class="stat-card"><strong>{{ available_count }}</strong><span>Available now</span></a>
+    <a href="?status=loaned" class="stat-card"><strong>{{ active_loans|length }}</strong><span>On loan</span></a>
   </div>
 </section>
 
@@ -17,15 +17,24 @@
   <div class="section-heading">
     <div><p class="eyebrow">COLLECTION</p><h2>Browse the shelves</h2></div>
     <form class="search" method="get">
+      <input type="hidden" name="status" value="{{ status_filter }}">
       <input type="search" name="q" value="{{ query }}" placeholder="Search books, doctors, specialties, borrowers or IDs…" aria-label="Search books and doctors">
       <button type="submit">Search</button>
     </form>
   </div>
+  
+  <div class="filters">
+    <a href="?status=all{% if query %}&q={{ query }}{% endif %}" class="filter-btn {% if status_filter == 'all' or not status_filter %}active{% endif %}">All Books</a>
+    <a href="?status=available{% if query %}&q={{ query }}{% endif %}" class="filter-btn {% if status_filter == 'available' %}active{% endif %}">Available</a>
+    <a href="?status=loaned{% if query %}&q={{ query }}{% endif %}" class="filter-btn {% if status_filter == 'loaned' %}active{% endif %}">On Loan</a>
+    <a href="?status=overdue{% if query %}&q={{ query }}{% endif %}" class="filter-btn {% if status_filter == 'overdue' %}active{% endif %}">Overdue</a>
+  </div>
+
   {% if query %}<p class="results">Results for “{{ query }}” · <a href="{% url 'home' %}">clear search</a></p>{% endif %}
   <div class="analytics">
-    <div><strong>{{ overdue_count }}</strong><span>Overdue loans</span></div>
-    <div><strong>{{ active_loans|length }}</strong><span>Active loans</span></div>
-    <div><strong>{{ book_count }}</strong><span>Total books</span></div>
+    <a href="?status=overdue" class="analytic-card overdue-box"><strong>{{ overdue_count }}</strong><span>Overdue loans</span></a>
+    <a href="?status=loaned" class="analytic-card"><strong>{{ active_loans|length }}</strong><span>Active loans</span></a>
+    <a href="?status=all" class="analytic-card"><strong>{{ book_count }}</strong><span>Total books</span></a>
   </div>
   {% if doctors %}
   <section class="doctor-preview">

@@ -1,10 +1,14 @@
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "django-insecure-local-library-project"
-DEBUG = True
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver"]
+SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-local-library-project")
+DEBUG = os.environ.get("DEBUG", "True").lower() in ("true", "1", "yes")
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver", "shelfwise-xm8q.onrender.com"]
+
+if "RENDER_EXTERNAL_HOSTNAME" in os.environ:
+    ALLOWED_HOSTS.append(os.environ["RENDER_EXTERNAL_HOSTNAME"])
 
 INSTALLED_APPS = [
     "django.contrib.admin",

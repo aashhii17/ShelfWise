@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Loan History — Shelfwise{% endblock %}
+{% block content %}
+
+<section class="catalogue">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">ARCHIVE</p>
+      <h2>Loan Records</h2>
+    </div>
+    <form class="search" method="get">
+      <input type="hidden" name="status" value="{{ status_filter }}">
+      <input type="search" name="q" value="{{ query }}" placeholder="Search loan records..." aria-label="Search loans">
+      <button type="submit">Search</button>
+    </form>
+  </div>
+
+  <div class="filters">
+    <a href="?status=all{% if query %}&q={{ query }}{% endif %}" class="filter-btn {% if status_filter == 'all' or not status_filter %}active{% endif %}">All</a>
+    <a href="?status=active{% if query %}&q={{ query }}{% endif %}" class="filter-btn {% if status_filter == 'active' %}active{% endif %}">Active</a>
+    <a href="?status=overdue{% if query %}&q={{ query }}{% endif %}" class="filter-btn {% if status_filter == 'overdue' %}active{% endif %}">Overdue</a>
+    <a href="?status=returned{% if query %}&q={{ query }}{% endif %}" class="filter-btn {% if status_filter == 'returned' %}active{% endif %}">Returned</a>
+  </div>
+
+  {% if query %}<p class="results">Results for “{{ query }}” · <a href="?status={{ status_filter }}">clear search</a></p>{% endif %}
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Book Title</th>
+          <th>Borrower</th>
+          <th>Borrower ID</th>
+          <th>Issued Date</th>
+          <th>Due Date</th>
+          <th>Returned Date</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for loan in loans %}
+          <tr>
+            <td><strong><a href="{% url 'book_detail' loan.book.pk %}">{{ loan.book.title }}</a></strong></td>
+            <td>{{ loan.borrower_name }}</td>
+            <td><code>{{ loan.borrower_id }}</code></td>
+            <td>{{ loan.issued_at|date:"d M Y H:i" }}</td>
+            <td>{{ loan.due_date|date:"d M Y" }}</td>
+            <td>{{ loan.returned_at|date:"d M Y H:i"|default:"—" }}</td>
+            <td>
+              {% if loan.returned_at %}
+                <span class="status-tag status-returned">Returned</span>
+              {% elif loan.is_overdue %}
+                <span class="status-tag status-overdue">Overdue ({{ loan.overdue_days }}d)</span>
+              {% else %}
+                <span class="status-tag status-active">Active</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if not loan.returned_at %}
+                <div class="action-buttons">
+                  {% if not loan.is_overdue %}
+                    <form method="post" action="{% url 'extend_loan' loan.pk %}">
+                      {% csrf_token %}
+                      <button type="submit" class="btn-action extend">Extend</button>
+                    </form>
+                  {% endif %}
+                  <form method="post" action="{% url 'return_book' loan.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-action return">Return</button>
+                  </form>
+                </div>
+              {% else %}
+                <span class="muted">No actions</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" class="text-center">No loan records found matching the criteria.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% endblock %}

@@ -13,11 +13,14 @@ from .models import Appointment, Book, Doctor, Loan
 
 def home(request):
     query = request.GET.get("q", "").strip()
+    status_filter = request.GET.get("status", "all").strip().lower()
+    
     books = Book.objects.prefetch_related("loans").annotate(
         active_loan_count=Count("loans", filter=Q(loans__returned_at__isnull=True)),
         total_loan_count=Count("loans"),
     )
     doctors = Doctor.objects.filter(verified=True).order_by("speciality", "last_name")
+    
     if query:
         books = books.filter(
             Q(title__icontains=query)
@@ -25,29 +28,68 @@ def home(request):
             | Q(loans__borrower_name__icontains=query)
             | Q(loans__borrower_id__icontains=query)
         ).distinct()
+        
     active_loans = Loan.objects.filter(returned_at__isnull=True).select_related("book")
     unavailable_ids = set(active_loans.values_list("book_id", flat=True))
     overdue_count = active_loans.filter(due_date__lt=timezone.localdate()).count()
+    
+    if status_filter == "available":
+        books = books.filter(active_loan_count=0)
+    elif status_filter == "loaned":
+        books = books.filter(active_loan_count__gt=0)
+    elif status_filter == "overdue":
+        books = books.filter(loans__returned_at__isnull=True, loans__due_date__lt=timezone.localdate()).distinct()
+        
     popular_books = (
         Book.objects.annotate(total_loan_count=Count("loans"))
         .order_by("-total_loan_count", "title")[:4]
     )
+    
     if query:
         doctors = doctors.filter(
             Q(first_name__icontains=query)
             | Q(last_name__icontains=query)
             | Q(speciality__icontains=query)
         ).distinct()
+        
     return render(request, "library/home.html", {
         "books": books,
         "doctors": doctors,
         "query": query,
+        "status_filter": status_filter,
         "unavailable_ids": unavailable_ids,
         "book_count": Book.objects.count(),
         "available_count": Book.objects.count() - len(unavailable_ids),
         "active_loans": active_loans,
         "overdue_count": overdue_count,
         "popular_books": popular_books,
+    })
+
+
+def loan_history(request):
+    status_filter = request.GET.get("status", "all").strip().lower()
+    query = request.GET.get("q", "").strip()
+    
+    loans = Loan.objects.select_related("book").order_by("-issued_at")
+    
+    if query:
+        loans = loans.filter(
+            Q(book__title__icontains=query) |
+            Q(borrower_name__icontains=query) |
+            Q(borrower_id__icontains=query)
+        )
+        
+    if status_filter == "active":
+        loans = loans.filter(returned_at__isnull=True)
+    elif status_filter == "returned":
+        loans = loans.filter(returned_at__isnull=False)
+    elif status_filter == "overdue":
+        loans = loans.filter(returned_at__isnull=True, due_date__lt=timezone.localdate())
+        
+    return render(request, "library/loan_list.html", {
+        "loans": loans,
+        "status_filter": status_filter,
+        "query": query,
     })
 
 
